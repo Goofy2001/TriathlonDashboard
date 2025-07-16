@@ -35,15 +35,6 @@ jobs:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
 
-      - name: 💾 Commit updated CSVs
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add *.csv
-          git commit -m "🔄 Dagelijkse Garmin sync"
-          git push
-        continue-on-error: true  # voorkomt crash als er niets te updaten was
-
       - name: 📝 Log time of successful update
         run: |
           echo "Laatste update: $(date -u)" >> update_log.txt
@@ -52,8 +43,8 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add *.csv update_log.txt
-          git commit -m "🔄 Dagelijkse Garmin sync + log"
-          git push
+          git add *.csv update_log.txt || echo "Niets om te committen"
+          git diff --cached --quiet || git commit -m "🔄 Dagelijkse Garmin sync + log"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:main
         continue-on-error: true
 
