@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from garminconnect import Garmin
 
 # === Config ===
-email = ""
-password = ""
+email = os.environ["GARMIN_EMAIL"]
+password = os.environ["GARMIN_PASSWORD"]
 CSV_FILE = "garmin_metrics_log.csv"
 
 # === Garmin login ===
