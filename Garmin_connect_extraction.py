@@ -3,8 +3,8 @@ from datetime import datetime, date, timedelta
 from garminconnect import Garmin
 
 # --- credentials ---
-email = ""
-password = ""
+email = os.environ["GARMIN_EMAIL"]
+password = os.environ["GARMIN_PASSWORD"]
 
 # --- Login ---
 try:
