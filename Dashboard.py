@@ -70,14 +70,14 @@ def convert_seconds_to_minutes(seconds):
         return None
 
 # === Load Data ===
-df_activities = pd.read_csv(r"C:\Users\thibo\Desktop\TRAINING STUFF\VScode\garmin_full_activities.csv")
+df_activities = pd.read_csv("garmin_full_activities.csv")
 df_activities["startTimeLocal"] = df_activities["startTimeLocal"].astype(str).str.strip()
 df_activities["startTimeLocal"] = pd.to_datetime(df_activities["startTimeLocal"], errors="coerce")
 df_activities["activityType_dict"] = df_activities["activityType"].apply(lambda x: ast.literal_eval(x) if pd.notnull(x) else {})
 activity_type_df = df_activities["activityType_dict"].apply(pd.Series)
 df_activities = pd.concat([df_activities, activity_type_df], axis=1).drop(columns=["activityType", "activityType_dict"])
 
-df_health = pd.read_csv(r"C:\Users\thibo\Desktop\TRAINING STUFF\VScode\Garmin_metrics_log.csv")
+df_health = pd.read_csv("garmin_metrics_log.csv")
 df_health["date"] = pd.to_datetime(df_health["date"], errors="coerce").dt.strftime("%Y-%m-%d")
 
 # === run data
