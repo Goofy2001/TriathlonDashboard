@@ -42,7 +42,18 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add *.csv update_log.txt || echo "Niets om toe te voegen"
-          git diff --cached --quiet || git commit -m "🔄 Dagelijkse Garmin sync + log"
-          git pull --rebase
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Goofy2001/TriathlonDashboard.git HEAD:main
+          
+          git add -A
+          CHANGES=$(git diff --cached --name-only)
+        
+          if [ -n "$CHANGES" ]; then
+            echo "🕒 $(date -u +"%Y-%m-%d %H:%M:%S") UTC" >> update_log.txt
+            echo "$CHANGES" | sed 's/^/🔸 /' >> update_log.txt
+            echo "" >> update_log.txt
+            git add update_log.txt
+            git commit -m "🔄 Dagelijkse Garmin sync + log"
+            git pull --rebase
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Goofy2001/TriathlonDashboard.git HEAD:main
+          else
+            echo "🟡 Geen wijzigingen gevonden. Geen commit nodig."
+          fi
