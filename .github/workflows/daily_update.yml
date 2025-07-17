@@ -2,11 +2,11 @@ name: Daily Garmin Sync
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Dagelijks om 08:00 Belgische tijd
+    - cron: '0 6 * * *'  # Dagelijks om 08:00 in België (06:00 UTC)
   workflow_dispatch:      # Manueel triggeren via GitHub UI
 
 permissions:
-  contents: write  # ⬅️ NODIG om te mogen pushen
+  contents: write  # Nodig om te mogen pushen via GITHUB_TOKEN
 
 jobs:
   run-scripts:
@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false  # ⬅️ anders gebruikt hij geen token
 
       - name: 🔧 Set up Python
         uses: actions/setup-python@v4
@@ -40,15 +38,11 @@ jobs:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
 
-      - name: 📝 Log time of successful update
-        run: |
-          echo "Laatste update: $(date -u)" >> update_log.txt
-
-      - name: 💾 Commit updated CSVs + log
+      - name: 📤 Commit en push CSV + log
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add *.csv update_log.txt || echo "Niets om te committen"
+          git add *.csv update_log.txt || echo "Niets om toe te voegen"
           git diff --cached --quiet || git commit -m "🔄 Dagelijkse Garmin sync + log"
           git pull --rebase
-          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Goofy2001/TriathlonDashboard.git HEAD:main
