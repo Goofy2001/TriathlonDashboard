@@ -69,7 +69,7 @@ def classify_workout(row):
     elif z1 > max(z2, z3, z4, z5):
         return 'Z1 - Recovery'
     else:
-        return 'Unclassified'
+        return 'Unknown'
 
 workout_zone_colors = {
     'Z5 - VO²Max': '#d62728',     # Fel rood (intensief)
