@@ -74,10 +74,10 @@ def classify_workout(row):
 workout_zone_colors = {
     'Z5 - VO²Max': '#d62728',     # Fel rood (intensief)
     'Z4 - Threshold': '#ff7f0e',  # Oranje
-    'Z3 - Tempo': '#1f77b4',      # Blauw
-    'Z2 - Endurance': '#2ca02c',  # Groen
-    'Z1 - Recovery': '#bcbd22',   # Geelgroen
-    'Unknown': '#7f7f7f'          # Grijs
+    'Z3 - Tempo': '#2ca02c',      # Groen
+    'Z2 - Endurance': '#1f77b4',  # Blauw
+    'Z1 - Recovery': '#7f7f7f',   # Grijs
+    'Unknown': '#bd22b8'          # Paars
     }
 
 def summarize_timeDistance_discipline(df, days=None): # sommeren van afstand en tijd per discipline
@@ -113,30 +113,7 @@ discipline_colors = { # kleuren voor disciplines
     "Other": "#707070"
 }
 
-def generate_pie_slices(x_pos, y_pos, num_segments, colors, radius=0.4): # maken van pie slices voor kalender
-    traces = []
-    angle_step = 2 * np.pi / num_segments
-    
-    for i, color in enumerate(colors):
-        theta_start = i * angle_step
-        theta_end = theta_start + angle_step
-        theta = np.linspace(theta_start, theta_end, 20)
-        
-        # Pie slice
-        xs = np.append([x_pos], x_pos + radius * np.cos(theta))
-        ys = np.append([y_pos], y_pos + radius * np.sin(theta))
-        
-        traces.append(go.Scatter(
-            x=xs,
-            y=ys,
-            fill="toself",
-            mode="none",
-            fillcolor=color,
-            hoverinfo="skip",
-            showlegend=False
-        ))
-    
-    return traces
+
 
 def format_hours_to_hhmm(hours):
     total_minutes = int(hours * 60)
