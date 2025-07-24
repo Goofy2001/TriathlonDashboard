@@ -147,8 +147,8 @@ def format_pace_to_minsec(pace):
     return f"{total_seconds // 60:02d}:{total_seconds % 60:02d}"
 
 # === Data managment ===
-df_activities = pd.read_csv(r"C:\Users\thibo\Desktop\TRAINING STUFF\VScode\garmin_full_activities.csv") # import activities data (locally)
-df_health = pd.read_csv(r"C:\Users\thibo\Desktop\TRAINING STUFF\VScode\garmin_metrics_log.csv") # import health data (locally)
+df_activities = pd.read_csv("garmin_full_activities.csv") # import activities data (locally)
+df_health = pd.read_csv("garmin_metrics_log.csv") # import health data (locally)
 
 # === Time columns ===
 df_activities['startTimeLocal'] = pd.to_datetime(df_activities["startTimeLocal"], format='%Y-%m-%d %H:%M:%S') # kolom omzetten naar een python tijd
