@@ -479,6 +479,9 @@ with swim_tab:
             "Duration: %{customdata[1]}<br>" +
             "HR: %{customdata[2]} bpm<br>" +
             "Zone: %{customdata[3]}<extra></extra>")
+    fig_swim_Pace.update_layout(shapes=[
+        dict(type="line", xref='paper', x0=0, x1=1, yref='y', y0=2.95, y1=2.95,
+        line=dict(color="blue", dash="dash"))])
     st.plotly_chart(fig_swim_Pace, use_container_width=True)
     fig_swim_maxPace = px.scatter(
         df_swim_timeframed,
@@ -707,6 +710,9 @@ with bike_tab:
             "Duration: %{customdata[1]}<br>" +
             "HR: %{customdata[2]} bpm<br>" +
             "Zone: %{customdata[3]}<extra></extra>")
+    fig_bike_Pace.update_layout(shapes=[
+        dict(type="line", xref='paper', x0=0, x1=1, yref='y', y0=26.5, y1=26.5,
+        line=dict(color="red", dash="dash"))])
     st.plotly_chart(fig_bike_Pace, use_container_width=True)
     fig_bike_maxPace = px.scatter(
         df_bike_timeframed,
@@ -944,6 +950,9 @@ with run_tab:
             "Duration: %{customdata[1]}<br>" +
             "HR: %{customdata[2]} bpm<br>" +
             "Zone: %{customdata[3]}<extra></extra>")
+    fig_Run_Pace.update_layout(shapes=[
+        dict(type="line", xref='paper', x0=0, x1=1, yref='y', y0=7.4, y1=7.4,
+        line=dict(color="green", dash="dash"))])
     st.plotly_chart(fig_Run_Pace, use_container_width=True)
     fig_run_maxPace = px.scatter(
         df_run_timeframed,
