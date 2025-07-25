@@ -440,7 +440,9 @@ with swim_tab:
         textposition="inside", hovertemplate="<extra></extra>",
         textfont=dict(color="white"))
     fig_Distance_swim.add_shape(type="line",
-        y=3.8, line=dict(color="blue", dash="dot"))
+        xref="paper", x0=0, x1=1,
+        yref="y", y0=3.8, y1=3.8,
+        line=dict(color="blue", dash="dot"))
     st.plotly_chart(fig_Distance_swim, use_container_width=True) 
     # pie chart met zones
     fig_Swim_time = go.Figure(go.Pie( # pie chart met gesommeerde tijd
@@ -670,7 +672,9 @@ with bike_tab:
         textposition="inside", hovertemplate="<extra></extra>",
         textfont=dict(color="white"))
     fig_Distance_bike.add_shape(type="line",
-        y=180, line=dict(color="red", dash="dot"))
+        xref="paper", x0=0, x1=1,
+        yref="y", y0=180, y1=180,
+        line=dict(color="red", dash="dot"))
     st.plotly_chart(fig_Distance_bike, use_container_width=True) 
     # pie chart met zones
     fig_Bike_time = go.Figure(go.Pie( # pie chart met gesommeerde tijd
@@ -901,7 +905,9 @@ with run_tab:
         textposition="inside", hovertemplate="<extra></extra>",
         textfont=dict(color="white"))
     fig_Distance_run.add_shape(type="line",
-        y=42.2, line=dict(color="green", dash="dot"))
+        xref="paper", x0=0, x1=1,
+        yref="y", y0=42.2, y1=42.2,
+        line=dict(color="green", dash="dot"))
     st.plotly_chart(fig_Distance_run, use_container_width=True) 
     # pie chart met zones
     fig_Run_time = go.Figure(go.Pie( # pie chart met gesommeerde tijd
