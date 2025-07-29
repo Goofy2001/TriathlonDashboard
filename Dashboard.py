@@ -54,10 +54,10 @@ def classify_workout(row):
     ae = row.get('aerobicTrainingEffect', 0)
     an = row.get('anaerobicTrainingEffect', 0)
     # Priority 1: VO2max efforts (high anaerobic load + z5 time)
-    if z5 > 60 and an > 2.5:
+    if z5 > 60 and an > 3:
         return 'Z5 - VO²Max'
     # Priority 2: Threshold training (substantial z4 time and high TE)
-    elif z4 > 180 and ae >= 2.5 and an > 1.0:
+    elif z4 > 180 and an > 3.0:
         return 'Z4 - Threshold'
     # Priority 3: Tempo (z3 dominant, moderate TE)
     elif z3 > max(z1, z2):
