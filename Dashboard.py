@@ -964,7 +964,7 @@ with run_tab:
         hover_data=["distance", df_run_timeframed["movingDuration"].apply(format_hours_to_hhmm), "averageHR", "classifiedZone"])
     fig_run_maxPace.update_layout(
         xaxis_title="Date",
-        yaxis_title="Max pace (km/h)",
+        yaxis_title="Max pace (min/km)",
         legend_title="Zone",
         height=500)
     fig_run_maxPace.update_yaxes(
@@ -1027,6 +1027,7 @@ with run_tab:
     # --- table
     st.subheader("📄 Runactivity")
     st.dataframe(df_run_table)
+
 
 
 
