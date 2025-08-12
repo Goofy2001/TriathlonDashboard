@@ -935,7 +935,7 @@ with run_tab:
         hover_data=["distance", df_run_timeframed["movingDuration"].apply(format_hours_to_hhmm), "averageHR", "classifiedZone"])
     fig_Run_Pace.update_layout(
         xaxis_title="Date",
-        yaxis_title="Speed (km/h)",
+        yaxis_title="Pace (min/km)",
         legend_title="Zone",
         height=500)
     fig_Run_Pace.update_yaxes(
@@ -945,7 +945,7 @@ with run_tab:
     fig_Run_Pace.update_traces(
         hovertemplate=
             "Date: %{x|%Y-%m-%d}<br>" +
-            "Speed: %{y:.2f} km/h<br>" +
+            "Pace: %{y:.2f} min/km <br>" +
             "Distance: %{customdata[0]} km<br>" +
             "Duration: %{customdata[1]}<br>" +
             "HR: %{customdata[2]} bpm<br>" +
@@ -974,7 +974,7 @@ with run_tab:
     fig_run_maxPace.update_traces(
         hovertemplate=
             "Date: %{x|%Y-%m-%d}<br>" +
-            "Speed: %{y:.2f} km/h<br>" +
+            "Max pace: %{y:.2f} min/km<br>" +
             "Distance: %{customdata[0]} km<br>" +
             "Duration: %{customdata[1]}<br>" +
             "HR: %{customdata[2]} bpm<br>" +
@@ -1027,5 +1027,6 @@ with run_tab:
     # --- table
     st.subheader("📄 Runactivity")
     st.dataframe(df_run_table)
+
 
 
