@@ -245,7 +245,7 @@ def filter_timeframe(df: pd.DataFrame, days: int | None) -> pd.DataFrame:
     """
     if days is None:
         return df.copy()
-    cutoff = datetime.now() - timedelta(days=days)
+    cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=days)
     return df[df["startTimeLocal"] >= cutoff].copy()
 
 
@@ -545,3 +545,4 @@ with pmc_tab:
         st.info("No data available for the selected timeframe.")
     else:
         render_training_load_chart(df_time)
+
