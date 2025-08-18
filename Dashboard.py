@@ -23,7 +23,7 @@ production code—rather, a starting point for further iteration.
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from pmc import compute_daily_load, compute_adl_ctl, add_ctl_bands, PMCParams
+from pmc import compute_daily_load, compute_adl_ctl, add_ctl_bands, PMCParams, to_ratio_view
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -299,61 +299,66 @@ def render_kpi_cards(df: pd.DataFrame) -> None:
 def _cached_daily_load(df: pd.DataFrame) -> pd.DataFrame:
     return compute_daily_load(df)
 
-def render_adl_ctl_with_bands(df: pd.DataFrame,
+def render_adl_over_ctl_ratio(df: pd.DataFrame,
                               title_suffix: str = "All sports",
+                              lower_ratio: float | None = 0.80,
                               caution_ratio: float = 1.30,
-                              danger_ratio: float = 1.50,
-                              lower_ratio: float | None = 0.80) -> None:
-    """Plot ADL (7d EMA) vs CTL (42d EMA) with shaded bands around CTL."""
+                              danger_ratio: float = 1.50) -> None:
+    """Plot ADL as a ratio over CTL (CTL baseline = 1)."""
     if df.empty:
         st.info("No activities to compute ADL/CTL.")
         return
 
-    # No UI control for method; we always use hr_proxy
     params = PMCParams(adl_days=7, ctl_days=42)
     daily  = _cached_daily_load(df)
     series = compute_adl_ctl(daily, params=params)
-    series = add_ctl_bands(series,
+    r      = to_ratio_view(series,
+                           lower_ratio=lower_ratio,
                            caution_ratio=caution_ratio,
-                           danger_ratio=danger_ratio,
-                           lower_ratio=lower_ratio)
+                           danger_ratio=danger_ratio)
 
-    x   = series["date"]
-    ctl = series["CTL"]
-    adl = series["ADL"]
-    ctl_caution = series["CTL_caution"]
-    ctl_danger  = series["CTL_danger"]
-    ctl_lower   = series["CTL_lower"] if "CTL_lower" in series else None
+    x = r["date"]
+    ones = np.ones(len(x))
 
     fig = go.Figure()
 
-    if ctl_lower is not None:
-        fig.add_trace(go.Scatter(x=x, y=ctl, line=dict(width=0), name="CTL base", showlegend=False))
+    # --- Optional underload band: lower -> 1.0
+    if "R_lower" in r:
+        fig.add_trace(go.Scatter(x=x, y=ones, line=dict(width=0), name="base", showlegend=False))
         fig.add_trace(go.Scatter(
-            x=x, y=ctl_lower, name="Underload band",
+            x=x, y=ones * r["R_lower"].iloc[0],  # constant line
             fill="tonexty", mode="lines", line=dict(width=0),
-            fillcolor="rgba(128,128,128,0.15)", showlegend=False
+            fillcolor="rgba(128,128,128,0.15)", name="Underload band", showlegend=False
         ))
 
-    fig.add_trace(go.Scatter(x=x, y=ctl, name="CTL (42d)", line=dict(width=2, color="#1f77b4")))
+    # --- Caution band: 1.0 -> caution
+    fig.add_trace(go.Scatter(x=x, y=ones, name="CTL baseline (=1)", line=dict(width=2, color="#1f77b4")))
     fig.add_trace(go.Scatter(
-        x=x, y=ctl_caution, name="Caution band",
+        x=x, y=ones * r["R_caution"].iloc[0],
         fill="tonexty", mode="lines", line=dict(width=0),
-        fillcolor="rgba(255,165,0,0.20)", showlegend=False
-    ))
-    fig.add_trace(go.Scatter(x=x, y=ctl_caution, line=dict(width=0), name="sep", showlegend=False))
-    fig.add_trace(go.Scatter(
-        x=x, y=ctl_danger, name="Danger band",
-        fill="tonexty", mode="lines", line=dict(width=0),
-        fillcolor="rgba(255,0,0,0.18)", showlegend=False
+        fillcolor="rgba(255,165,0,0.20)", name="Caution band", showlegend=False
     ))
 
-    fig.add_trace(go.Scatter(x=x, y=adl, name="ADL (7d)", line=dict(width=2, dash="dash", color="#ff7f0e")))
+    # --- Danger band: caution -> danger
+    fig.add_trace(go.Scatter(x=x, y=ones * r["R_caution"].iloc[0], line=dict(width=0), name="sep", showlegend=False))
+    fig.add_trace(go.Scatter(
+        x=x, y=ones * r["R_danger"].iloc[0],
+        fill="tonexty", mode="lines", line=dict(width=0),
+        fillcolor="rgba(255,0,0,0.18)", name="Danger band", showlegend=False
+    ))
+
+    # --- ADL/CTL ratio line
+    fig.add_trace(go.Scatter(
+        x=x, y=r["R_ADL"], name="ADL / CTL",
+        line=dict(width=2, dash="dash", color="#ff7f0e")
+    ))
 
     fig.update_layout(
-        title=f"ADL vs CTL — {title_suffix}",
-        xaxis_title="Date", yaxis_title="Load (a.u.)",
-        legend_title="", height=420
+        title=f"ADL as % of CTL — {title_suffix}",
+        xaxis_title="Date",
+        yaxis_title="ADL / CTL (ratio)",
+        yaxis=dict(tickformat=".2f", rangemode="tozero"),
+        height=420, legend_title=""
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -563,6 +568,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
