@@ -14,11 +14,17 @@ def complete_daily_index(daily_df: pd.DataFrame) -> pd.DataFrame:
     if daily_df.empty:
         today = pd.Timestamp.now().normalize()
         return pd.DataFrame({"date": [today], "load": [0.0]})
-    idx = pd.date_range(daily_df["date"].min(), daily_df["date"].max(), freq="D")
-    return (daily_df.set_index("date")
-                  .reindex(idx, fill_value=0.0)
-                  .rename_axis("date")
-                  .reset_index())
+
+    daily = daily_df.copy()
+    # NEW: normalize and coerce
+    daily["date"] = pd.to_datetime(daily["date"], errors="coerce").dt.normalize()
+
+    idx = pd.date_range(daily["date"].min(), daily["date"].max(), freq="D")
+    return (daily.set_index("date")
+                 .reindex(idx, fill_value=0.0)
+                 .rename_axis("date")
+                 .reset_index())
+
 
 def ema(series: pd.Series, N: int) -> pd.Series:
     """Classic EMA with period N."""
@@ -100,7 +106,7 @@ def forecast_atl_ctl(daily_hist: pd.DataFrame,
         future_plan = pd.DataFrame({"date": future_dates, "load": mean_load})
     else:
         future_plan = future_plan.copy()
-        future_plan["date"] = pd.to_datetime(future_plan["date"]).normalize()
+        future_plan["date"] = pd.to_datetime(future_plan["date"], errors="coerce").dt.normalize()
         future_plan["load"] = pd.to_numeric(future_plan["load"], errors="coerce").fillna(0.0)
 
     joined = extend_with_plan(hist, future_plan)
