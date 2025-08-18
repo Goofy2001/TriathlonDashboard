@@ -533,7 +533,9 @@ with overview_tab:
     col2.plotly_chart(fig_dist, use_container_width=True)
 
     st.divider()
-    render_adl_ctl_with_bands(df_activities, title_suffix="All sports")
+    render_adl_over_ctl_ratio(df_activities, title_suffix="All sports",
+                lower_ratio=0.80, caution_ratio=1.30, danger_ratio=1.50)
+
 
 
 
@@ -568,6 +570,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
