@@ -532,9 +532,6 @@ with overview_tab:
     col1.plotly_chart(fig_time, use_container_width=True)
     col2.plotly_chart(fig_dist, use_container_width=True)
 
-    st.divider()
-    render_adl_over_ctl_ratio(df_activities, title_suffix="All sports",
-                lower_ratio=0.80, caution_ratio=1.30, danger_ratio=1.50)
 
 
 
@@ -563,6 +560,10 @@ with health_tab:
             fig.update_traces(line=dict(color=color))
             st.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
+    render_adl_over_ctl_ratio(df_activities, title_suffix="All sports",
+                lower_ratio=0.75, caution_ratio=1.50, danger_ratio=3)
+
 # Individual sport tabs
 with swim_tab:
     render_sport_section(df_activities, "Swim", "Pace (min/100m)", "sportPace", "AerobicEfficiency")
@@ -570,6 +571,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
