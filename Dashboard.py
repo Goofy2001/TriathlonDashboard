@@ -309,8 +309,6 @@ def render_adl_ctl_with_bands(df: pd.DataFrame,
         st.info("No activities to compute ADL/CTL.")
         return
 
-    c1, c2 = st.columns([1.2, 1])
-    method = c1.radio("Load method", ["hr_proxy", "srpe", "tss"], index=0, horizontal=True)
     params = PMCParams(adl_days=7, ctl_days=42)
     daily = _cached_daily_load(df, method=method)
     series = compute_adl_ctl(daily, params=params)
@@ -573,6 +571,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
