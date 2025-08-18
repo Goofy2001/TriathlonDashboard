@@ -23,7 +23,7 @@ production code—rather, a starting point for further iteration.
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from pmc import compute_daily_load, forecast_atl_ctl, PMCParams
+from pmc import compute_daily_load, compute_adl_ctl, add_ctl_bands, PMCParams
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -295,59 +295,79 @@ def render_kpi_cards(df: pd.DataFrame) -> None:
     k4.metric("Avg HR", f"{avg_hr:.0f} bpm" if not np.isnan(avg_hr) else "—")
 
 
-def render_training_load_chart(df: pd.DataFrame) -> None:
-    """Render the performance management chart (CTL, ATL, TSB)."""
-    pmc = compute_training_load(df)
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=pmc["date"], y=pmc["CTL"], name="CTL (42d)", line=dict(width=2)))
-    fig.add_trace(go.Scatter(x=pmc["date"], y=pmc["ATL"], name="ATL (7d)", line=dict(width=2, dash="dash")))
-    fig.add_trace(go.Scatter(x=pmc["date"], y=pmc["TSB"], name="TSB", line=dict(width=2, dash="dot")))
-    fig.update_layout(
-        title="Performance Management Chart", xaxis_title="Date", yaxis_title="Load", legend_title="Metric",
-        height=400
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
 @st.cache_data(show_spinner=False)
 def _cached_daily_load(df: pd.DataFrame, method: str) -> pd.DataFrame:
-    # cache the daily aggregation because it’s stable for a given dataset + method
     return compute_daily_load(df, method=method)
 
-def render_pmc(df: pd.DataFrame, title_suffix: str = "All sports") -> None:
-    """Render ATL & CTL (history + forecast) using triathlon.pmc."""
+def render_adl_ctl_with_bands(df: pd.DataFrame,
+                              title_suffix: str = "All sports",
+                              caution_ratio: float = 1.30,
+                              danger_ratio: float = 1.50,
+                              lower_ratio: float | None = 0.80) -> None:
+    """Plot ADL (7d EMA) vs CTL (42d EMA) with shaded bands around CTL."""
     if df.empty:
-        st.info("No activities to compute ATL/CTL.")
+        st.info("No activities to compute ADL/CTL.")
         return
 
-    # --- Controls
-    st.subheader(f"Performance management — {title_suffix}")
-    c1, c2, c3 = st.columns([1.2, 1, 1])
+    c1, c2 = st.columns([1.2, 1])
     method = c1.radio("Load method", ["hr_proxy", "srpe", "tss"], index=0, horizontal=True)
-    weeks = c2.slider("Weeks to project", 1, 12, 4)
-    # default plan = recent average over last 14 days
-    daily_hist = _cached_daily_load(df, method=method)
-    recent_avg = float(daily_hist["load"].tail(min(14, len(daily_hist))).mean()) if not daily_hist.empty else 0.0
-    plan_avg = c3.number_input("Planned avg daily load", min_value=0.0, value=recent_avg, step=5.0)
+    params = PMCParams(adl_days=7, ctl_days=42)
+    daily = _cached_daily_load(df, method=method)
+    series = compute_adl_ctl(daily, params=params)
+    series = add_ctl_bands(series, caution_ratio=caution_ratio, danger_ratio=danger_ratio, lower_ratio=lower_ratio)
 
-    # --- Build simple flat plan
-    future_dates = pd.date_range(pd.Timestamp.now().normalize() + pd.Timedelta(days=1),
-                                 periods=weeks*7, freq="D")
-    future_plan = pd.DataFrame({"date": future_dates, "load": plan_avg})
+    # Build shaded bands using filled traces (tonexty)
+    x = series["date"]
+    ctl = series["CTL"]
+    ctl_caution = series["CTL_caution"]
+    ctl_danger  = series["CTL_danger"]
+    ctl_lower   = series["CTL_lower"] if "CTL_lower" in series else None
+    adl = series["ADL"]
 
-    # --- Compute forecast
-    params = PMCParams(atl_days=7, ctl_days=42)
-    atl_ctl = forecast_atl_ctl(daily_hist[["date","load"]], future_plan=future_plan, params=params)
-
-    # --- Plot ATL & CTL
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["CTL"], name="CTL (42d)", line=dict(width=2)))
-    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["ATL"], name="ATL (7d)", line=dict(width=2, dash="dash")))
+
+    # Optional underload band (grey): CTL_lower -> CTL
+    if ctl_lower is not None:
+        fig.add_trace(go.Scatter(x=x, y=ctl, name="CTL base (for fill)", line=dict(width=0), showlegend=False))
+        fig.add_trace(go.Scatter(
+            x=x, y=ctl_lower, name="Underload band",
+            fill="tonexty", mode="lines",
+            line=dict(width=0),
+            fillcolor="rgba(128,128,128,0.15)",
+            showlegend=False
+        ))
+
+    # Caution band (amber): CTL -> CTL*1.30
+    fig.add_trace(go.Scatter(x=x, y=ctl, name="CTL (42d)", line=dict(width=2, color="#1f77b4")))
+    fig.add_trace(go.Scatter(
+        x=x, y=ctl_caution, name="Caution band",
+        fill="tonexty", mode="lines",
+        line=dict(width=0),
+        fillcolor="rgba(255,165,0,0.20)",  # amber
+        showlegend=False
+    ))
+
+    # Danger band (red): CTL*1.30 -> CTL*1.50
+    fig.add_trace(go.Scatter(x=x, y=ctl_caution, name="band sep", line=dict(width=0), showlegend=False))
+    fig.add_trace(go.Scatter(
+        x=x, y=ctl_danger, name="Danger band",
+        fill="tonexty", mode="lines",
+        line=dict(width=0),
+        fillcolor="rgba(255,0,0,0.18)",
+        showlegend=False
+    ))
+
+    # ADL line on top
+    fig.add_trace(go.Scatter(x=x, y=adl, name="ADL (7d)", line=dict(width=2, dash="dash", color="#ff7f0e")))
+
     fig.update_layout(
-        title=f"ATL & CTL — {title_suffix}",
+        title=f"ADL vs CTL — {title_suffix}",
         xaxis_title="Date", yaxis_title="Load (a.u.)",
-        legend_title="Metric", height=420
+        legend_title="",
+        height=420
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 def render_sport_section(
@@ -517,9 +537,9 @@ with overview_tab:
     col1.plotly_chart(fig_time, use_container_width=True)
     col2.plotly_chart(fig_dist, use_container_width=True)
 
-      # ATL/CTL (history + forecast). Use full history (recommended) rather than df_time
     st.divider()
-    render_pmc(df_activities, title_suffix="All sports")
+    render_adl_ctl_with_bands(df_activities, title_suffix="All sports")
+
 
 
 # Health tab
@@ -553,6 +573,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
