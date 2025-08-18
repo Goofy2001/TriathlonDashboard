@@ -480,8 +480,9 @@ st.title("Triathlon Training Dashboard")
 
 # Sidebar timeframe selection
 timeframe_days = {
-    "Last week": 7,
     "Last month": 30,
+    "Last three months": 90,
+    "Last six months": 183,
     "Last year": 365,
     "All time": None,
 }
@@ -563,6 +564,7 @@ with pmc_tab:
         st.info("No data available for the selected timeframe.")
     else:
         render_training_load_chart(df_time)
+
 
 
 
