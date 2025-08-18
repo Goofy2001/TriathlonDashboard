@@ -510,7 +510,7 @@ with health_tab:
     timeframe_label = st.selectbox("Timeframe for health", list(timeframe_days.keys()), key="tf_health")
     days = timeframe_days[timeframe_label]
     if days is not None:
-        cutoff = datetime.now().date() - timedelta(days=days)
+        cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=days)
         df_health_time = df_health[df_health["date"] >= cutoff].copy()
     else:
         df_health_time = df_health.copy()
@@ -545,4 +545,5 @@ with pmc_tab:
         st.info("No data available for the selected timeframe.")
     else:
         render_training_load_chart(df_time)
+
 
