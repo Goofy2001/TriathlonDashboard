@@ -33,30 +33,29 @@ def ema(series: pd.Series, N: int) -> pd.Series:
         out[i] = prev
     return pd.Series(out, index=series.index)
 
-def compute_daily_load(df_acts: pd.DataFrame, method: str = "hr_proxy") -> pd.DataFrame:
+def compute_daily_load(df_acts: pd.DataFrame) -> pd.DataFrame:
     """
-    Build a daily load series from activities.
-    method:
-      - 'hr_proxy': load = movingDuration_hours * averageHR
-      - 'srpe'    : load = movingDuration_hours * sRPE * 10   (requires 'sRPE')
-      - 'tss'     : load = trainingStressScore                (requires 'trainingStressScore')
-    Returns ['date','load'].
+    Build a daily load series from activities using HR proxy only:
+        load = movingDuration(hours) * averageHR
+    Returns ['date','load'] with a continuous daily index.
     """
     if df_acts.empty:
         return pd.DataFrame({"date": [], "load": []})
 
     df = df_acts.copy()
     df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"], errors="coerce")
-    # your pipeline already converts movingDuration to hours
+
+    # movingDuration is already in HOURS in your pipeline; if not, divide seconds by 3600
     dur_h = pd.to_numeric(df["movingDuration"], errors="coerce").fillna(0.0)
-    
-    else:
-        hr = pd.to_numeric(df.get("averageHR"), errors="coerce").fillna(0.0)
-        load = dur_h * hr
+    hr    = pd.to_numeric(df.get("averageHR"), errors="coerce").fillna(0.0)
+
+    load = dur_h * hr
 
     daily = (pd.DataFrame({"date": df["startTimeLocal"].dt.normalize(), "load": load})
                .groupby("date", as_index=False)["load"].sum())
+
     return complete_daily_index(daily)
+
 
 def compute_adl_ctl(daily_load_df: pd.DataFrame, params: PMCParams = PMCParams()) -> pd.DataFrame:
     """Compute ADL(=ATL) and CTL from a daily load frame."""
