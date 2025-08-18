@@ -80,3 +80,29 @@ def add_ctl_bands(adl_ctl_df: pd.DataFrame,
     if lower_ratio is not None:
         df["CTL_lower"] = df["CTL"] * lower_ratio
     return df
+
+def to_ratio_view(adl_ctl_df: pd.DataFrame,
+                  caution_ratio: float = 1.30,
+                  danger_ratio: float = 1.50,
+                  lower_ratio: float | None = 0.80) -> pd.DataFrame:
+    """
+    Convert ADL/CTL series to a ratio view:
+      R_ADL = ADL / CTL
+    And provide constant horizontal bands around CTL baseline (=1):
+      R_lower   = lower_ratio   (optional underload band)
+      R_caution = caution_ratio
+      R_danger  = danger_ratio
+    """
+    df = adl_ctl_df.copy()
+    eps = 1e-9
+    # Avoid div-by-zero for early days when CTL ~ 0
+    denom = df["CTL"].where(df["CTL"] > eps)
+    df["R_ADL"] = df["ADL"] / denom
+    df.loc[denom.isna(), "R_ADL"] = np.nan  # mask until CTL is established
+
+    df["R_base"] = 1.0
+    df["R_caution"] = caution_ratio
+    df["R_danger"]  = danger_ratio
+    if lower_ratio is not None:
+        df["R_lower"] = lower_ratio
+    return df
