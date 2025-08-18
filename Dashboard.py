@@ -296,8 +296,8 @@ def render_kpi_cards(df: pd.DataFrame) -> None:
 
 
 @st.cache_data(show_spinner=False)
-def _cached_daily_load(df: pd.DataFrame, method: str) -> pd.DataFrame:
-    return compute_daily_load(df, method=method)
+def _cached_daily_load(df: pd.DataFrame) -> pd.DataFrame:
+    return compute_daily_load(df)
 
 def render_adl_ctl_with_bands(df: pd.DataFrame,
                               title_suffix: str = "All sports",
@@ -309,62 +309,54 @@ def render_adl_ctl_with_bands(df: pd.DataFrame,
         st.info("No activities to compute ADL/CTL.")
         return
 
+    # No UI control for method; we always use hr_proxy
     params = PMCParams(adl_days=7, ctl_days=42)
-    daily = _cached_daily_load(df, method=method)
+    daily  = _cached_daily_load(df)
     series = compute_adl_ctl(daily, params=params)
-    series = add_ctl_bands(series, caution_ratio=caution_ratio, danger_ratio=danger_ratio, lower_ratio=lower_ratio)
+    series = add_ctl_bands(series,
+                           caution_ratio=caution_ratio,
+                           danger_ratio=danger_ratio,
+                           lower_ratio=lower_ratio)
 
-    # Build shaded bands using filled traces (tonexty)
-    x = series["date"]
+    x   = series["date"]
     ctl = series["CTL"]
+    adl = series["ADL"]
     ctl_caution = series["CTL_caution"]
     ctl_danger  = series["CTL_danger"]
     ctl_lower   = series["CTL_lower"] if "CTL_lower" in series else None
-    adl = series["ADL"]
 
     fig = go.Figure()
 
-    # Optional underload band (grey): CTL_lower -> CTL
     if ctl_lower is not None:
-        fig.add_trace(go.Scatter(x=x, y=ctl, name="CTL base (for fill)", line=dict(width=0), showlegend=False))
+        fig.add_trace(go.Scatter(x=x, y=ctl, line=dict(width=0), name="CTL base", showlegend=False))
         fig.add_trace(go.Scatter(
             x=x, y=ctl_lower, name="Underload band",
-            fill="tonexty", mode="lines",
-            line=dict(width=0),
-            fillcolor="rgba(128,128,128,0.15)",
-            showlegend=False
+            fill="tonexty", mode="lines", line=dict(width=0),
+            fillcolor="rgba(128,128,128,0.15)", showlegend=False
         ))
 
-    # Caution band (amber): CTL -> CTL*1.30
     fig.add_trace(go.Scatter(x=x, y=ctl, name="CTL (42d)", line=dict(width=2, color="#1f77b4")))
     fig.add_trace(go.Scatter(
         x=x, y=ctl_caution, name="Caution band",
-        fill="tonexty", mode="lines",
-        line=dict(width=0),
-        fillcolor="rgba(255,165,0,0.20)",  # amber
-        showlegend=False
+        fill="tonexty", mode="lines", line=dict(width=0),
+        fillcolor="rgba(255,165,0,0.20)", showlegend=False
     ))
-
-    # Danger band (red): CTL*1.30 -> CTL*1.50
-    fig.add_trace(go.Scatter(x=x, y=ctl_caution, name="band sep", line=dict(width=0), showlegend=False))
+    fig.add_trace(go.Scatter(x=x, y=ctl_caution, line=dict(width=0), name="sep", showlegend=False))
     fig.add_trace(go.Scatter(
         x=x, y=ctl_danger, name="Danger band",
-        fill="tonexty", mode="lines",
-        line=dict(width=0),
-        fillcolor="rgba(255,0,0,0.18)",
-        showlegend=False
+        fill="tonexty", mode="lines", line=dict(width=0),
+        fillcolor="rgba(255,0,0,0.18)", showlegend=False
     ))
 
-    # ADL line on top
     fig.add_trace(go.Scatter(x=x, y=adl, name="ADL (7d)", line=dict(width=2, dash="dash", color="#ff7f0e")))
 
     fig.update_layout(
         title=f"ADL vs CTL — {title_suffix}",
         xaxis_title="Date", yaxis_title="Load (a.u.)",
-        legend_title="",
-        height=420
+        legend_title="", height=420
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
@@ -571,6 +563,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
