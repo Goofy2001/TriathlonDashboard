@@ -311,6 +311,69 @@ def compute_training_load(df: pd.DataFrame) -> pd.DataFrame:
     daily["TSB"] = daily["CTL"] - daily["ATL"]
     return daily
 
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+
+def _complete_daily_index(daily_df: pd.DataFrame) -> pd.DataFrame:
+    """Zorgt voor een aaneengesloten dagreeks en vult ontbrekende dagen met 0."""
+    if daily_df.empty:
+        return pd.DataFrame({"date": pd.date_range(pd.Timestamp.today().normalize(), periods=1),
+                             "load": [0.0]})
+    idx = pd.date_range(daily_df["date"].min(), daily_df["date"].max(), freq="D")
+    return (daily_df.set_index("date")
+                  .reindex(idx, fill_value=0.0)
+                  .rename_axis("date").reset_index())
+
+def _ema(series: pd.Series, N: int) -> pd.Series:
+    """Exponentieel voortschrijdend gemiddelde met window N dagen (klassieke EMA)."""
+    alpha = 2 / (N + 1)
+    out = []
+    prev = None
+    for v in series:
+        prev = v if prev is None else prev + alpha * (v - prev)
+        out.append(prev)
+    return pd.Series(out, index=series.index)
+
+def compute_daily_load(df: pd.DataFrame, method: str = "hr_proxy") -> pd.DataFrame:
+    """
+    Maakt een dagelijkse load-serie uit je activiteiten.
+    method:
+      - 'hr_proxy' -> load = movingDuration(uur) * averageHR
+      - 'srpe'     -> load = duration_uur * sRPE * 10  (vereist kolom 'sRPE' 1–10)
+      - 'tss'      -> load = TSS (vereist kolom 'trainingStressScore')
+    """
+    if df.empty:
+        return pd.DataFrame({"date": [], "load": []})
+
+    # Zorg dat startTimeLocal datetime is
+    df = df.copy()
+    df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"], errors="coerce")
+
+    if method == "tss" and "trainingStressScore" in df.columns:
+        df["load"] = pd.to_numeric(df["trainingStressScore"], errors="coerce").fillna(0.0)
+    elif method == "srpe" and "sRPE" in df.columns:
+        dur_h = pd.to_numeric(df["movingDuration"], errors="coerce").fillna(0.0)  # aanname: in uren in jouw code
+        srpe  = pd.to_numeric(df["sRPE"], errors="coerce").fillna(0.0)
+        df["load"] = dur_h * srpe * 10.0
+    else:
+        # fallback: hr_proxy
+        dur_h = pd.to_numeric(df["movingDuration"], errors="coerce").fillna(0.0)
+        hr    = pd.to_numeric(df["averageHR"], errors="coerce").fillna(0.0)
+        df["load"] = dur_h * hr
+
+    daily = (df.assign(date=df["startTimeLocal"].dt.normalize())
+               .groupby("date", as_index=False)["load"].sum())
+
+    return _complete_daily_index(daily)
+
+def compute_atl_ctl(daily_load_df: pd.DataFrame, atl_days: int = 7, ctl_days: int = 42) -> pd.DataFrame:
+    """Berekent ATL en CTL uit een dagelijkse load-tabel."""
+    dl = daily_load_df.copy()
+    dl["ATL"] = _ema(dl["load"], N=atl_days)
+    dl["CTL"] = _ema(dl["load"], N=ctl_days)
+    return dl[["date", "ATL", "CTL", "load"]]
+
 
 ###############################################################################
 # UI components
@@ -542,6 +605,48 @@ with health_tab:
             fig.update_traces(line=dict(color=color))
             st.plotly_chart(fig, use_container_width=True)
 
+  import streamlit as st
+
+  st.markdown("### ATL & CTL")
+
+  # Optioneel: timeframe
+  tf_map = {"Last week": 7, "Last month": 30, "Last year": 365, "All time": None}
+  tf_label = st.selectbox("Timeframe", list(tf_map.keys()), index=2)  # bv. Last year
+  tf_days = tf_map[tf_label]
+
+  # Optioneel: per sport filter
+  sports = ["All", "Swim", "Bike", "Run"]
+  sport_pick = st.selectbox("Discipline", sports, index=0)
+  if sport_pick != "All":
+    df_src = df_activities[df_activities["Discipline"] == sport_pick].copy()
+  else:
+    df_src = df_activities.copy()
+
+  # Timefilter
+  if tf_days is not None:
+    cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=tf_days)
+    df_src = df_src[df_src["startTimeLocal"] >= cutoff].copy()
+
+  # Keuze van load-methode
+  load_method = st.radio("Load method", ["hr_proxy", "srpe", "tss"], horizontal=True, index=0)
+
+  daily = compute_daily_load(df_src, method=load_method)
+  atl_ctl = compute_atl_ctl(daily, atl_days=7, ctl_days=42)
+
+  if atl_ctl.empty or len(atl_ctl) < 3:
+    st.info("Niet genoeg data om ATL/CTL te berekenen voor deze selectie.")
+  else:
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["CTL"],
+                             name="CTL (42d)", line=dict(width=2)))
+    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["ATL"],
+                             name="ATL (7d)", line=dict(width=2, dash="dash")))
+    fig.update_layout(
+        height=400, title=f"ATL & CTL — {sport_pick}",
+        xaxis_title="Date", yaxis_title="Load (a.u.)"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 # Individual sport tabs
 with swim_tab:
     render_sport_section(df_activities, "Swim", "Pace (min/100m)", "sportPace", "AerobicEfficiency")
@@ -549,6 +654,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
