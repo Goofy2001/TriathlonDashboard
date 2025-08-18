@@ -409,6 +409,24 @@ def render_sport_section(
         title="Week"
     ))
     st.plotly_chart(fig_time, use_container_width=True)
+    # Stacked bar: weekly distance by zone (km)
+    fig_dist = px.bar(
+      summary_week,
+      x="WeekIndex",
+      y="distance",
+      color="classifiedZone",
+      labels={"distance": "Distance (km)", "WeekIndex": "Week"},
+      title=f"Weekly {sport.lower()} distance by zone",
+    )
+    fig_dist.update_layout(
+      xaxis=dict(
+          tickmode="array",
+          tickvals=summary_week["WeekIndex"],
+          ticktext=summary_week["YearWeek"],
+          title="Week",
+      )
+    )
+    st.plotly_chart(fig_dist, use_container_width=True)
     # Scatter: pace/speed vs date
     fig_speed = px.scatter(
         df_time,
@@ -545,5 +563,6 @@ with pmc_tab:
         st.info("No data available for the selected timeframe.")
     else:
         render_training_load_chart(df_time)
+
 
 
