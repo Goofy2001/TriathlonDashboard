@@ -23,6 +23,7 @@ production code—rather, a starting point for further iteration.
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from pmc import compute_daily_load, forecast_atl_ctl, PMCParams
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -307,6 +308,47 @@ def render_training_load_chart(df: pd.DataFrame) -> None:
     )
     st.plotly_chart(fig, use_container_width=True)
 
+@st.cache_data(show_spinner=False)
+def _cached_daily_load(df: pd.DataFrame, method: str) -> pd.DataFrame:
+    # cache the daily aggregation because it’s stable for a given dataset + method
+    return compute_daily_load(df, method=method)
+
+def render_pmc(df: pd.DataFrame, title_suffix: str = "All sports") -> None:
+    """Render ATL & CTL (history + forecast) using triathlon.pmc."""
+    if df.empty:
+        st.info("No activities to compute ATL/CTL.")
+        return
+
+    # --- Controls
+    st.subheader(f"Performance management — {title_suffix}")
+    c1, c2, c3 = st.columns([1.2, 1, 1])
+    method = c1.radio("Load method", ["hr_proxy", "srpe", "tss"], index=0, horizontal=True)
+    weeks = c2.slider("Weeks to project", 1, 12, 4)
+    # default plan = recent average over last 14 days
+    daily_hist = _cached_daily_load(df, method=method)
+    recent_avg = float(daily_hist["load"].tail(min(14, len(daily_hist))).mean()) if not daily_hist.empty else 0.0
+    plan_avg = c3.number_input("Planned avg daily load", min_value=0.0, value=recent_avg, step=5.0)
+
+    # --- Build simple flat plan
+    future_dates = pd.date_range(pd.Timestamp.now().normalize() + pd.Timedelta(days=1),
+                                 periods=weeks*7, freq="D")
+    future_plan = pd.DataFrame({"date": future_dates, "load": plan_avg})
+
+    # --- Compute forecast
+    params = PMCParams(atl_days=7, ctl_days=42)
+    atl_ctl = forecast_atl_ctl(daily_hist[["date","load"]], future_plan=future_plan, params=params)
+
+    # --- Plot ATL & CTL
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["CTL"], name="CTL (42d)", line=dict(width=2)))
+    fig.add_trace(go.Scatter(x=atl_ctl["date"], y=atl_ctl["ATL"], name="ATL (7d)", line=dict(width=2, dash="dash")))
+    fig.update_layout(
+        title=f"ATL & CTL — {title_suffix}",
+        xaxis_title="Date", yaxis_title="Load (a.u.)",
+        legend_title="Metric", height=420
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def render_sport_section(
     df: pd.DataFrame, sport: str, label_speed: str, units_speed: str, ae_col: str
@@ -475,6 +517,11 @@ with overview_tab:
     col1.plotly_chart(fig_time, use_container_width=True)
     col2.plotly_chart(fig_dist, use_container_width=True)
 
+      # ATL/CTL (history + forecast). Use full history (recommended) rather than df_time
+    st.divider()
+    render_pmc(df_activities, title_suffix="All sports")
+
+
 # Health tab
 with health_tab:
     st.markdown("### Health metrics")
@@ -506,6 +553,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
