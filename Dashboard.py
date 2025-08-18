@@ -11,10 +11,6 @@ readable and maintainable. Key improvements include:
 * **Modular functions** for repeated tasks like filtering by timeframe and
   discipline, computing summary tables, and rendering charts. This makes
   it easy to extend or adjust the dashboard without copy‑pasting code.
-* **Simple performance management chart** using an approximate training
-  load (duration × average heart rate). It shows the chronic and acute
-  training loads (CTL and ATL) together with the resulting training
-  stress balance (TSB).
 * **Improved UX**: consistent labels and units, single column layouts on
   mobile (via ``use_container_width=True``), and guard clauses when no
   data is available to prevent runtime errors.
@@ -554,16 +550,7 @@ with bike_tab:
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
 
-# Performance management
-with pmc_tab:
-    st.markdown("### Performance Management")
-    timeframe_label = st.selectbox("Timeframe for PMC", list(timeframe_days.keys()), key="tf_pmc")
-    days = timeframe_days[timeframe_label]
-    df_time = filter_timeframe(df_activities, days)
-    if df_time.empty:
-        st.info("No data available for the selected timeframe.")
-    else:
-        render_training_load_chart(df_time)
+
 
 
 
