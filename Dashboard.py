@@ -489,8 +489,8 @@ df_activities = prepare_activities(df_activities_raw)
 df_health = prepare_health(df_health_raw)
 
 # Tabs
-overview_tab, health_tab, swim_tab, bike_tab, run_tab, pmc_tab = st.tabs([
-    "Overview", "Health", "Swim", "Bike", "Run", "Performance Mgmt"])
+overview_tab, health_tab, swim_tab, bike_tab, run_tab = st.tabs([
+    "Overview", "Health", "Swim", "Bike", "Run"])
 
 # Overview
 with overview_tab:
@@ -549,6 +549,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
