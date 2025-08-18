@@ -30,6 +30,7 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import ast  # needed to unpack activityType dictionaries
 
 ###############################################################################
 # Caching and data preparation
@@ -145,6 +146,30 @@ def prepare_activities(df_raw: pd.DataFrame) -> pd.DataFrame:
         A cleaned and enriched DataFrame ready for visualisation.
     """
     df = df_raw.copy()
+    # -------------------------------------------------------------------------
+    # Unpack the `activityType` column. Garmin encodes additional information
+    # (including `typeKey`) inside this nested dictionary or string. If we
+    # don’t expand it, the `typeKey` column used for discipline mapping will
+    # not exist, resulting in a KeyError.  We convert strings using
+    # ``ast.literal_eval`` and leave dictionaries unchanged.  Unknown or
+    # malformed entries are mapped to an empty dict.
+    if "activityType" in df.columns:
+        def _to_dict(x):
+            if isinstance(x, dict):
+                return x
+            if isinstance(x, str):
+                try:
+                    return ast.literal_eval(x)
+                except Exception:
+                    return {}
+            return {}
+        df["activityType_dict"] = df["activityType"].apply(_to_dict)
+        # Expand the dictionary into separate columns
+        activity_type_df = df["activityType_dict"].apply(pd.Series)
+        df = pd.concat([df, activity_type_df], axis=1)
+        # Drop the original columns to avoid confusion
+        df.drop(columns=["activityType", "activityType_dict"], inplace=True, errors="ignore")
+    # -------------------------------------------------------------------------
     # Parse timestamps
     df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"], format="%Y-%m-%d %H:%M:%S")
     # ISO calendar fields
