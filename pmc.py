@@ -49,12 +49,7 @@ def compute_daily_load(df_acts: pd.DataFrame, method: str = "hr_proxy") -> pd.Da
     df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"], errors="coerce")
     # your pipeline already converts movingDuration to hours
     dur_h = pd.to_numeric(df["movingDuration"], errors="coerce").fillna(0.0)
-
-    if method == "tss" and "trainingStressScore" in df.columns:
-        load = pd.to_numeric(df["trainingStressScore"], errors="coerce").fillna(0.0)
-    elif method == "srpe" and "sRPE" in df.columns:
-        srpe = pd.to_numeric(df["sRPE"], errors="coerce").fillna(0.0)
-        load = dur_h * srpe * 10.0
+    
     else:
         hr = pd.to_numeric(df.get("averageHR"), errors="coerce").fillna(0.0)
         load = dur_h * hr
