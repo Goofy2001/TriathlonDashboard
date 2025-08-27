@@ -246,6 +246,7 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
     elif zone_type == "HR Zone":
         hr_cols = ["hrTimeInZone_1", "hrTimeInZone_2", "hrTimeInZone_3",
                    "hrTimeInZone_4", "hrTimeInZone_5"]
+        .rename(columns={"classifiedZone": "Zone"})
 
         # Melt into long format
         df_melt = df_time.melt(
@@ -310,44 +311,32 @@ def plot_weekly_duration(summary_week: pd.DataFrame, sport: str, zone_type: str)
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_weekly_distance(summary_week: pd.DataFrame, sport: str, zone_type: str):
-    """Stacked bar (if applicable): weekly distance by zone type (classified or HR zones)."""
+def plot_weekly_distance(summary_week: pd.DataFrame, sport: str):
+    """Stacked bar: weekly distance by classified zone only."""
     
-    if zone_type == "Classified zone":
-        x_col = "WeekIndex"
-        y_col = "distance"
-        color_col = "Zone"
-        df_plot = summary_week.copy()
-    elif zone_type == "HR Zone":
-        # HR zones usually don't split distance, just total per week
-        df_plot = summary_week.groupby(["WeekIndex", "YearWeek"], as_index=False)[["distance"]].sum()
-        x_col = "WeekIndex"
-        y_col = "distance"
-        color_col = None
-    else:
-        st.error(f"Unknown zone type: {zone_type}")
-        return
-
+    df_plot = summary_week.copy()
+    
     fig = px.bar(
         df_plot,
-        x=x_col,
-        y=y_col,
-        color=color_col,
-        labels={y_col: "Distance (km)", x_col: "Week"},
-        title=f"Weekly {sport.lower()} distance by {zone_type}" if color_col else f"Weekly {sport.lower()} distance (total)",
+        x="WeekIndex",
+        y="distance",
+        color="Zone",  # assumes compute_weekly_summary renamed classifiedZone -> Zone
+        labels={"distance": "Distance (km)", "WeekIndex": "Week"},
+        title=f"Weekly {sport.lower()} distance by classified zone",
     )
 
     if "YearWeek" in df_plot.columns:
         fig.update_layout(
             xaxis=dict(
                 tickmode="array",
-                tickvals=df_plot[x_col].unique(),
-                ticktext=df_plot.groupby(x_col)["YearWeek"].first().values,
+                tickvals=df_plot["WeekIndex"].unique(),
+                ticktext=df_plot.groupby("WeekIndex")["YearWeek"].first().values,
                 title="Week",
             )
         )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 def plot_efficiency_trend(df_time: pd.DataFrame, sport: str, metric_col: str):
@@ -525,6 +514,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
