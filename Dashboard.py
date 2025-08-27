@@ -426,7 +426,7 @@ def render_sport_section(
 
     # --- Plots ---
     plot_weekly_duration(summary_week, sport, zone_type)
-    plot_weekly_distance(summary_week, sport, zone_type)
+    plot_weekly_distance(summary_week, sport)
     plot_efficiency_trend(df_time, sport, metric)
 
     # --- Table ---
@@ -514,6 +514,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
