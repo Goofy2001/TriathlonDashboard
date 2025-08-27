@@ -418,7 +418,7 @@ def render_sport_section(
     # --- Zone type selection for stacked bars ---
     zone_type = st.radio(
         "Zone type for weekly summary",
-        options=["classifiedZone", "hrTimeInZone"],
+        options=["Classified zone", "HR Zone"],
         index=0,
         horizontal=True,
         key=f"zone_type_{sport}"
@@ -524,4 +524,5 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
