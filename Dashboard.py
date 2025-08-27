@@ -409,10 +409,12 @@ def render_sport_section(
 
     # --- Metric selection for efficiency scatter ---
     metric = st.selectbox(
-        "Metric to analyze",
-        options=["sportPace", "avgPower"],
-        index=0 if sport in ["Swim", "Run"] else 1
+    "Metric to analyze",
+    options=["sportPace", "avgPower"],
+    index=0 if sport in ["Swim", "Run"] else 1,
+    key=f"metric_{sport}"
     )
+
 
     # --- Weekly summaries for stacked bars ---
     summary_duration, summary_distance = compute_weekly_summary(df_time, zone_type)
@@ -507,6 +509,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
