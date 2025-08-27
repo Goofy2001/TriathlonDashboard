@@ -234,9 +234,11 @@ def get_filtered_data(df: pd.DataFrame, sport: str) -> pd.DataFrame:
     return filter_timeframe(df_sport, days)
 
 def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFrame:
-    
+    """Compute weekly summary for duration (classified or HR zones) and distance (always classified)."""
+
+    # --- Duration ---
     if zone_type == "Classified zone":
-        summary_week = (
+        summary_duration = (
             df_time.groupby(["WeekIndex", "YearWeek", "classifiedZone"])
             .agg(Duration=("movingDuration", "sum"))
             .reset_index()
@@ -246,7 +248,6 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
     elif zone_type == "HR Zone":
         hr_cols = ["hrTimeInZone_1", "hrTimeInZone_2", "hrTimeInZone_3",
                    "hrTimeInZone_4", "hrTimeInZone_5"]
-        df_time.rename(columns={"classifiedZone": "Zone"})
 
         # Melt into long format
         df_melt = df_time.melt(
@@ -255,11 +256,10 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
             var_name="Zone",
             value_name="Duration"
         )
-
         # Extract zone number (hrTimeInZone_1 -> 1)
         df_melt["Zone"] = df_melt["Zone"].str.extract(r"(\d+)").astype(int)
 
-        summary_week = (
+        summary_duration = (
             df_melt.groupby(["WeekIndex", "YearWeek", "Zone"])
             .agg(Duration=("Duration", "sum"))
             .reset_index()
@@ -268,42 +268,36 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
     else:
         raise ValueError(f"Unknown zone_type: {zone_type}")
 
-    return summary_week
+    # --- Distance (always classified zone) ---
+    summary_distance = (
+        df_time.groupby(["WeekIndex", "YearWeek", "classifiedZone"])
+        .agg(distance=("distance", "sum"))
+        .reset_index()
+        .rename(columns={"classifiedZone": "Zone"})
+    )
+
+    return summary_duration, summary_distance
+
 
 def plot_weekly_duration(summary_week: pd.DataFrame, sport: str, zone_type: str):
     """Stacked bar: weekly duration by zone type (classified or HR zones)."""
     
-    if zone_type == "Classified zone":
-        x_col = "WeekIndex"
-        y_col = "Duration"
-        color_col = "Zone"
-        df_plot = summary_week.copy()
-    elif zone_type == "HR Zone":
-        # summary_week is already melted in compute_weekly_summary
-        x_col = "WeekIndex"
-        y_col = "Duration"
-        color_col = "Zone"
-        df_plot = summary_week.copy()
-    else:
-        st.error(f"Unknown zone type: {zone_type}")
-        return
-
+    df_plot = summary_week.copy()
     fig = px.bar(
         df_plot,
-        x=x_col,
-        y=y_col,
-        color=color_col,
-        labels={y_col: "Duration (hr)", x_col: "Week"},
+        x="WeekIndex",
+        y="Duration",
+        color="Zone",
+        labels={"Duration": "Duration (hr)", "WeekIndex": "Week"},
         title=f"Weekly {sport.lower()} time by {zone_type}",
     )
 
-    # Add tick labels if YearWeek exists
     if "YearWeek" in df_plot.columns:
         fig.update_layout(
             xaxis=dict(
                 tickmode="array",
-                tickvals=df_plot[x_col].unique(),
-                ticktext=df_plot.groupby(x_col)["YearWeek"].first().values,
+                tickvals=df_plot["WeekIndex"].unique(),
+                ticktext=df_plot.groupby("WeekIndex")["YearWeek"].first().values,
                 title="Week",
             )
         )
@@ -311,16 +305,15 @@ def plot_weekly_duration(summary_week: pd.DataFrame, sport: str, zone_type: str)
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_weekly_distance(summary_week: pd.DataFrame, sport: str):
+def plot_weekly_distance(summary_distance: pd.DataFrame, sport: str):
     """Stacked bar: weekly distance by classified zone only."""
     
-    df_plot = summary_week.copy()
-    
+    df_plot = summary_distance.copy()
     fig = px.bar(
         df_plot,
         x="WeekIndex",
         y="distance",
-        color="Zone",  # assumes compute_weekly_summary renamed classifiedZone -> Zone
+        color="Zone",
         labels={"distance": "Distance (km)", "WeekIndex": "Week"},
         title=f"Weekly {sport.lower()} distance by classified zone",
     )
@@ -514,6 +507,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
