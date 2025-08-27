@@ -415,11 +415,11 @@ def render_sport_section(
     )
 
     # --- Weekly summaries for stacked bars ---
-    summary_week = compute_weekly_summary(df_time, zone_type)
+    summary_duration, summary_distance = compute_weekly_summary(df_time, zone_type)
 
     # --- Plots ---
-    plot_weekly_duration(summary_week, sport, zone_type)
-    plot_weekly_distance(summary_week, sport)
+    plot_weekly_duration(summary_duration, sport, zone_type)
+    plot_weekly_distance(summary_distance, sport)
     plot_efficiency_trend(df_time, sport, metric)
 
     # --- Table ---
@@ -507,6 +507,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
