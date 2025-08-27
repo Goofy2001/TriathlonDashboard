@@ -246,7 +246,7 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
     elif zone_type == "HR Zone":
         hr_cols = ["hrTimeInZone_1", "hrTimeInZone_2", "hrTimeInZone_3",
                    "hrTimeInZone_4", "hrTimeInZone_5"]
-        .rename(columns={"classifiedZone": "Zone"})
+        df_time.rename(columns={"classifiedZone": "Zone"})
 
         # Melt into long format
         df_melt = df_time.melt(
@@ -514,6 +514,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
