@@ -58,7 +58,7 @@ def classify_discipline(type_key: str) -> str:
     """Map Garmin ``typeKey`` values to broad disciplines."""
     if type_key in ("running", "trail_running", "treadmill_running"):
         return "Run"
-    if type_key in ("cycling", "indoor_cycling"):
+    if type_key in ("cycling", "indoor_cycling", "virtual_ride"):
         return "Bike"
     if type_key in ("open_water_swimming", "lap_swimming"):
         return "Swim"
@@ -571,6 +571,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
