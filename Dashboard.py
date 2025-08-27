@@ -270,47 +270,45 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
     return summary_week
 
 def plot_weekly_duration(summary_week: pd.DataFrame, sport: str, zone_type: str):
-    """Stacked bar: weekly duration by zone type (classified or hrTimeInZone)."""
+    """Stacked bar: weekly duration by zone type (classified or HR zones)."""
     
-    if zone_type == "classifiedZone":
-        # Already grouped by classifiedZone
-        fig = px.bar(
-            summary_week,
-            x="WeekIndex",
-            y="movingDuration",
-            color="classifiedZone",
-            labels={"movingDuration": "Duration (hr)", "WeekIndex": "Week"},
-            title=f"Weekly {sport.lower()} time by {zone_type}",
-        )
-    elif zone_type == "hrTimeInZone":
-        # Melt the zone columns
-        zone_cols = [c for c in summary_week.columns if c.startswith("hrTimeInZone_")]
-        melted = summary_week.melt(
-            id_vars=["WeekIndex", "YearWeek"],
-            value_vars=zone_cols,
-            var_name="Zone",
-            value_name="Duration",
+    if zone_type == "Classified zone":
+        x_col = "WeekIndex"
+        y_col = "Duration"
+        color_col = "Zone"
+        df_plot = summary_week.copy()
+    elif zone_type == "HR Zone":
+        # summary_week is already melted in compute_weekly_summary
+        x_col = "WeekIndex"
+        y_col = "Duration"
+        color_col = "Zone"
+        df_plot = summary_week.copy()
+    else:
+        st.error(f"Unknown zone type: {zone_type}")
+        return
+
+    fig = px.bar(
+        df_plot,
+        x=x_col,
+        y=y_col,
+        color=color_col,
+        labels={y_col: "Duration (hr)", x_col: "Week"},
+        title=f"Weekly {sport.lower()} time by {zone_type}",
+    )
+
+    # Add tick labels if YearWeek exists
+    if "YearWeek" in df_plot.columns:
+        fig.update_layout(
+            xaxis=dict(
+                tickmode="array",
+                tickvals=df_plot[x_col].unique(),
+                ticktext=df_plot.groupby(x_col)["YearWeek"].first().values,
+                title="Week",
+            )
         )
 
-        fig = px.bar(
-            melted,
-            x="WeekIndex",
-            y="Duration",
-            color="Zone",
-            labels={"Duration": "Duration (hr)", "WeekIndex": "Week"},
-            title=f"Weekly {sport.lower()} time by HR zones",
-        )
-    
-    # Same layout for both
-    fig.update_layout(
-        xaxis=dict(
-            tickmode="array",
-            tickvals=summary_week["WeekIndex"],
-            ticktext=summary_week["YearWeek"],
-            title="Week",
-        )
-    )
     st.plotly_chart(fig, use_container_width=True)
+
 
 def plot_weekly_distance(summary_week: pd.DataFrame, sport: str, zone_type: str):
     """Stacked bar (if applicable): weekly distance by zone type (classified or hrTimeInZone)."""
@@ -524,5 +522,6 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
