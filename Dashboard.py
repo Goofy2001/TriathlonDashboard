@@ -6,6 +6,7 @@ import plotly.express as px
 import streamlit as st
 import plotly.graph_objects as go
 import ast
+import statsmodels
 
 # === Functions ===
 def load_raw_data() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -545,6 +546,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
