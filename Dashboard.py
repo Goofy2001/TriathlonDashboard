@@ -287,7 +287,8 @@ def plot_weekly_duration(summary_week: pd.DataFrame, sport: str, zone_type: str)
         df_plot,
         x="WeekIndex",
         y="Duration",
-        marker=dict(colors=[color_map_HR[z] for z in df_plot["Zone"]]),
+        color="Zone",
+        color_discrete_map=color_map_HR,
         labels={"Duration": "Duration (hr)", "WeekIndex": "Week"},
         title=f"Weekly {sport.lower()} time by {zone_type}",
     )
@@ -313,7 +314,8 @@ def plot_weekly_distance(summary_distance: pd.DataFrame, sport: str):
         df_plot,
         x="WeekIndex",
         y="distance",
-        marker=dict(colors=[color_map_HR[z] for z in df_plot["Zone"]]),
+        color="Zone",
+        color_discrete_map=color_map_HR,
         labels={"distance": "Distance (km)", "WeekIndex": "Week"},
         title=f"Weekly {sport.lower()} distance by classified zone",
     )
@@ -533,6 +535,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
