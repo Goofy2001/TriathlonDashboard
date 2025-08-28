@@ -376,7 +376,8 @@ def plot_efficiency_trend(df_time: pd.DataFrame, sport: str, metric_col: str):
         x="averageHR",
         y=metric_col
     ).update_traces(
-        line=dict(color="darkgrey", dash="dash", width=2),
+        line=dict(color="darkgrey", dash="dash", width=0.5),
+        opacity=0.25,
         hoverinfo="skip",  # optional: hide hover for the line
         showlegend=False
     ).data
@@ -558,6 +559,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
