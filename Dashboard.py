@@ -427,6 +427,14 @@ def render_sport_section(
     # --- Table ---
     render_workout_table(df_time, sport, label_speed, ae_col)
 
+#--- Colors ---
+color_map_discipline = {
+    "Bike": "#1f77b4",   # blue
+    "Run": "#ff7f0e",    # orange
+    "Swim": "#2ca02c"    # green
+}
+
+
 
 ###############################################################################
 # Main Streamlit app
@@ -466,13 +474,15 @@ with overview_tab:
         labels=summary_disc["Discipline"],
         values=summary_disc["movingDuration"],
         hole=0.4,
-        title=f"{timeframe_label} – Time spent (hr)"
+        title=f"{timeframe_label} – Time spent (hr)",
+        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]])
     ))
     fig_dist = go.Figure(go.Pie(
         labels=summary_disc["Discipline"],
         values=summary_disc["distance"],
         hole=0.4,
-        title=f"{timeframe_label} – Distance (km)"
+        title=f"{timeframe_label} – Distance (km)",
+        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]])
     ))
     col1, col2 = st.columns(2)
     col1.plotly_chart(fig_time, use_container_width=True)
@@ -509,6 +519,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
