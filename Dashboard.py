@@ -259,6 +259,16 @@ def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFram
         # Extract zone number (hrTimeInZone_1 -> 1)
         df_melt["Zone"] = df_melt["Zone"].str.extract(r"(\d+)").astype(int)
 
+        zone_labels = {
+            1: "Z1",
+            2: "Z2",
+            3: "Z3",
+            4: "Z4",
+            5: "Z5"
+            }
+
+        df_melt["Zone"] = df_melt["Zone"].map(zone_labels)
+
         summary_duration = (
             df_melt.groupby(["WeekIndex", "YearWeek", "Zone"])
             .agg(Duration=("Duration", "sum"))
@@ -438,11 +448,11 @@ color_map_discipline = {
 }
 
 color_map_HR = {
-    "1": "#808080",
-    "2": "#636EFA",
-    "3": "#00CC96",
-    "4": "#FFA15A",
-    "5": "#EF553B",
+    "Z1": "#808080",
+    "Z2": "#636EFA",
+    "Z3": "#00CC96",
+    "Z4": "#FFA15A",
+    "Z5": "#EF553B",
     "Unknown": "#FFFFFF",       # grey
     "Z1 - Recovery": "#808080",
     "Z2 - Endurance": "#636EFA",
@@ -535,6 +545,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
