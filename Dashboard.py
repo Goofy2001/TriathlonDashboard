@@ -429,9 +429,9 @@ def render_sport_section(
 
 #--- Colors ---
 color_map_discipline = {
-    "Bike": "#1f77b4",   # blue
+    "Bike": "#2ca02c",   # blue
     "Run": "#ff7f0e",    # orange
-    "Swim": "#2ca02c"    # green
+    "Swim": "#1f77b4"    # green
 }
 
 
@@ -519,6 +519,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
