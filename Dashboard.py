@@ -358,7 +358,7 @@ def plot_efficiency_trend(df_time: pd.DataFrame, sport: str, metric_col: str):
         df_time,
         x="averageHR",
         y=metric_col,
-        color="startTimeLocal",  # color gradient by date
+        color="YearWeek",  # color gradient by date
         trendline="ols",
         hover_data=["startTimeLocal", "movingDuration", "distance", "typeKey"],
         labels={
@@ -545,6 +545,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
