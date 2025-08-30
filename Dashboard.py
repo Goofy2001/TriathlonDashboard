@@ -234,6 +234,20 @@ def get_filtered_data(df: pd.DataFrame, sport: str) -> pd.DataFrame:
     days = timeframe_days[timeframe_label]
     return filter_timeframe(df_sport, days)
 
+# If your values are minutes (floats)
+def format_minutes(value: float) -> str:
+    minutes = int(value)
+    seconds = int(round((value - minutes) * 60))
+    return f"{minutes:02d}:{seconds:02d}"
+
+# If your values are hours (floats)
+def format_hours(value: float) -> str:
+    td = datetime.timedelta(hours=value)
+    total_seconds = int(td.total_seconds())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
 def compute_weekly_summary(df_time: pd.DataFrame, zone_type: str) -> pd.DataFrame:
     """Compute weekly summary for duration (classified or HR zones) and distance (always classified)."""
 
@@ -510,12 +524,14 @@ with overview_tab:
     df_time = filter_timeframe(df_activities, days)
     # Pie charts: discipline share of duration and distance
     summary_disc = summarize_by(df_time, "Discipline", None)  # Already filtered by timeframe
+    summary_disc["Duration_fmt"] = summary_disc["Duration"].apply(format_hours)
     fig_time = go.Figure(go.Pie(
         labels=summary_disc["Discipline"],
         values=summary_disc["movingDuration"],
         hole=0.4,
         title=f"{timeframe_label} – Time spent (hr)",
-        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]])
+        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]]),
+        hovertext=summary_disc["Duration_fmt"]
     ))
     fig_dist = go.Figure(go.Pie(
         labels=summary_disc["Discipline"],
@@ -559,6 +575,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
