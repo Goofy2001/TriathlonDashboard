@@ -529,8 +529,7 @@ with overview_tab:
         values=summary_disc["movingDuration"],
         hole=0.4,
         title=f"{timeframe_label} – Time spent (hr)",
-        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]]),
-        hovertext=summary_disc["Duration_fmt"]
+        marker=dict(colors=[color_map_discipline[d] for d in summary_disc["Discipline"]])
     ))
     fig_dist = go.Figure(go.Pie(
         labels=summary_disc["Discipline"],
@@ -574,6 +573,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
