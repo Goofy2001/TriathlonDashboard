@@ -524,7 +524,7 @@ with overview_tab:
     df_time = filter_timeframe(df_activities, days)
     # Pie charts: discipline share of duration and distance
     summary_disc = summarize_by(df_time, "Discipline", None)  # Already filtered by timeframe
-    summary_disc["Duration_fmt"] = summary_disc["Duration"].apply(format_hours)
+    summary_disc["Duration_fmt"] = summary_disc["movingDuration"].apply(format_hours)
     fig_time = go.Figure(go.Pie(
         labels=summary_disc["Discipline"],
         values=summary_disc["movingDuration"],
@@ -575,6 +575,7 @@ with bike_tab:
     render_sport_section(df_activities, "Bike", "Speed (km/h)", "sportPace", "AerobicEfficiencyBike")
 with run_tab:
     render_sport_section(df_activities, "Run", "Pace (min/km)", "sportPace", "AerobicEfficiency")
+
 
 
 
