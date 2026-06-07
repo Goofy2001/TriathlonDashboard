@@ -1482,3 +1482,7 @@ Laatste update: Wed Jul 16 15:32:42 UTC 2025
 🕒 2026-06-06 08:28:18 UTC
 🔸 garmin_metrics_log.csv
 
+🕒 2026-06-07 08:49:39 UTC
+🔸 garmin_activities.csv
+🔸 garmin_metrics_log.csv
+
